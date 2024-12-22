@@ -79,4 +79,7 @@ alter table meals
 add column meal varchar(50);
 
 alter table meals
+    rename column meal to meal_name;
+
+alter table meals
 alter column meal set not null;
