@@ -2,70 +2,32 @@ create table teachers (
     teacher_id serial primary key,
     first_name varchar(15) not null,
     second_name varchar(15) not null,
-    experience int,
-    salary int
+    experience int check (experience >= 0),
+    salary int check (salary >= 0)
 );
-
-alter table teachers
-    add constraint chk_experience check (experience >= 0),
-    add constraint chk_salary check (salary >= 0);
 
 create table groups (
     group_id serial primary key,
-    group_name varchar(15) not null,
-    age_range varchar(10) not null
+    group_name varchar(15) not null unique,
+    age_range varchar(3) not null check (age_range in ('1-2', '3-4', '5-6', '6-7'))
 );
-
-alter table groups
-    add constraint chk_age_range check (age_range in ('1-2', '3-4', '5-6', '6-7'));
-alter table groups
-    add constraint unique_group_name UNIQUE (group_name);
-alter table groups
-    alter column age_range type varchar(3);
-
 
 create table children (
     child_id serial primary key,
     first_name varchar(15) not null,
     second_name varchar(15) not null,
-    date_of_birth date not null,
-    group_id int,
-    foreign key (group_id) references groups(group_id)
+    date_of_birth date not null check (date_of_birth < current_date),
+    group_id int not null references groups(group_id)
 );
-
-alter table children
-    add constraint chk_date_of_birth check (date_of_birth < current_date);
-alter table children
-    alter column group_id set not null;
 
 create table activities (
     activity_id serial primary key,
-    activity_name varchar(15) not null,
-    activity_type varchar(15) not null,
+    activity_type varchar(5) not null check (activity_type in ('Sport', 'Music', 'Art', 'Dance', 'Study')),
     activity_date date not null,
-    activity_time time not null,
-    activity_location varchar(50) not null,
-    group_id int,
-    foreign key (group_id) references groups(group_id)
+    activity_time time not null check (activity_time >= '08:00:00' and activity_time <= '16:00:00'),
+    activity_location varchar(10) not null check (activity_location in ('Indoor', 'Outdoor')),
+    group_id int not null references groups(group_id)
 );
-alter table activities
-    add column activity_duration interval default '0 hours';
-
-alter table activities
-    alter column activity_duration set not null;
-
-alter table activities
-    add constraint chk_duration check (activity_duration > 0);
-alter table activities
-    add constraint chk_activity_date check (activity_date >= current_date),
-    add constraint chk_activity_time check (activity_time >= '08:00:00' and activity_time <= '20:00:00'),
-    add constraint chk_activity_type check (activity_type in ('Sport', 'Music', 'Art', 'Dance')),
-    add constraint chk_activity_location check (activity_location in ('Indoor', 'Outdoor'));
-alter table activities
-    alter column group_id set not null;
-alter table activities
-    alter column activity_type type varchar(5),
-    alter column activity_location type varchar(10);
 
 create table teachers_groups (
     teacher_id int,
@@ -75,28 +37,13 @@ create table teachers_groups (
     foreign key (group_id) references groups(group_id)
 );
 
-create table teachers_activities (
-    teacher_id int,
-    activity_id int,
-    primary key (teacher_id, activity_id),
-    foreign key (teacher_id) references teachers(teacher_id),
-    foreign key (activity_id) references activities(activity_id)
-);
-
 create table parents (
     parent_id serial primary key,
     first_name varchar(15) not null,
     second_name varchar(15) not null,
     phone_number varchar(15) not null unique,
-    email varchar(25) not null unique
+    email varchar(255) not null unique
 );
-
-alter table parents
-    add constraint chk_phone_number check (phone_number ~ '^\+380\d{9}$'),
-    add constraint chk_email check (email ~ '^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$');
-
-alter table parents
-    alter column email type varchar(255);
 
 create table children_parents (
     child_id int,
@@ -108,28 +55,28 @@ create table children_parents (
 
 create table medical_records (
     record_id serial primary key,
-    record_date date not null,
-    record_description text not null,
-    child_id int,
-    foreign key (child_id) references children(child_id)
+    record_date date not null check (record_date <= current_date),
+    health_status varchar(10) not null check (health_status in ('Healthy', 'Sick', 'Allergy')),
+    child_id int not null references children(child_id)
 );
-
-alter table medical_records
-    add constraint chk_record_date check (record_date <= current_date);
-alter table medical_records
-    alter column child_id set not null;
 
 create table attendances (
     attendance_id serial primary key,
-    attendance_date date not null,
-    attendance_status varchar(10) not null,
-    child_id int,
-    foreign key (child_id) references children(child_id)
+    attendance_date date not null check (attendance_date <= current_date),
+    attendance_status varchar(10) not null check (attendance_status in ('Present', 'Absent')),
+    child_id int not null references children(child_id)
 );
 
-alter table attendances
-    add constraint chk_attendance_status check (attendance_status in ('Present', 'Absent', 'Sick'));
-alter table attendances
-    add constraint chk_attendance_date check (attendance_date <= current_date);
-alter table attendances
-    alter column child_id set not null;
+create table meals (
+    meal_id serial primary key,
+    meal_date date not null check (meal_date <= current_date),
+    meal_type varchar(10) not null check (meal_type in ('Breakfast', 'Lunch', 'Dinner')),
+    group_id int not null references groups(group_id),
+    unique (meal_date, meal_type, group_id)
+);
+
+alter table meals
+add column meal varchar(50);
+
+alter table meals
+alter column meal set not null;
