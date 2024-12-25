@@ -101,3 +101,6 @@ alter table meals
 
 alter table meals
     alter column meal set not null;
+
+alter table meals
+    alter column meal_name type varchar(25);
