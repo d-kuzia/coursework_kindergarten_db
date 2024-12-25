@@ -1,3 +1,4 @@
+--- Запити прості ---
 -- Список усіх дітей та їхніх батьків
 select children.first_name  as child_name,
        children.second_name as child_surname,
@@ -35,33 +36,6 @@ select children.first_name  as child_name,
 from children
          join groups on children.group_id = groups.group_id
 where groups.group_name = 'Happy Hippos';
-
--- Усі заняття, які проводяться на вулиці для груп від 3 до 4 років
-select activities.activity_type,
-       activities.activity_date,
-       activities.activity_time
-from activities
-where activities.group_id in (select groups.group_id
-                              from groups
-                              where groups.age_range = '3-4')
-  and activities.activity_location = 'Outdoor';
-
--- Діти, які пропустили хоча б один день
-select children.first_name  as child_name,
-       children.second_name as child_surname
-from children
-where children.child_id in (select attendances.child_id
-                            from attendances
-                            where attendances.attendance_status = 'Absent');
-
--- Усі заняття, які проводили вчителі з досвідом більше 15 років
-select activities.activity_type,
-       activities.activity_date
-from activities
-where activities.group_id in (select teachers_groups.group_id
-                              from teachers_groups
-                                       join teachers on teachers_groups.teacher_id = teachers.teacher_id
-                              where teachers.experience > 15);
 
 -- Усі діти, які були на заняттях у вчителя з досвідом менше 5 років
 select distinct children.first_name  as child_name,
@@ -131,3 +105,82 @@ from groups
 group by groups.group_name
 order by average_salary desc;
 
+-- Найчастіше пропущений день тижня
+select extract(dow from attendances.attendance_date) as day_of_week,
+       count(attendances.attendance_id)              as total_absences
+from attendances
+where attendances.attendance_status = 'Absent'
+group by day_of_week
+order by total_absences desc
+limit 1;
+
+-- Вчителі та заняття, які вони проводили
+select teachers.first_name  as teacher_name,
+       teachers.second_name as teacher_surname,
+       activities.activity_type,
+       activities.activity_date
+from teachers
+         join teachers_groups on teachers.teacher_id = teachers_groups.teacher_id
+         join activities on teachers_groups.group_id = activities.group_id;
+
+-- Який тип занять проводиться найчастіше
+select activities.activity_type,
+       count(activities.activity_id) as total_activities
+from activities
+group by activities.activity_type
+order by total_activities desc
+limit 1;
+
+
+--- З підзапитами ---
+-- Усі заняття, які проводяться на вулиці для груп від 3 до 4 років
+select activities.activity_type,
+       activities.activity_date,
+       activities.activity_time
+from activities
+where activities.group_id in (select groups.group_id
+                              from groups
+                              where groups.age_range = '3-4')
+  and activities.activity_location = 'Outdoor';
+
+-- Діти, які пропустили хоча б один день
+select children.first_name  as child_name,
+       children.second_name as child_surname
+from children
+where children.child_id in (select attendances.child_id
+                            from attendances
+                            where attendances.attendance_status = 'Absent');
+
+-- Усі заняття, які проводили вчителі з досвідом більше 15 років
+select activities.activity_type,
+       activities.activity_date
+from activities
+where activities.group_id in (select teachers_groups.group_id
+                              from teachers_groups
+                                       join teachers on teachers_groups.teacher_id = teachers.teacher_id
+                              where teachers.experience > 15);
+
+-- Діти, які відвідали більше занять, між середня кількість занять
+select children.first_name  as child_name,
+       children.second_name as child_surname
+from children
+         join groups on children.group_id = groups.group_id
+         join activities on groups.group_id = activities.group_id
+group by children.child_id, children.first_name, children.second_name
+having count(activities.activity_id) > (select avg(activity_count)
+                                        from (select count(activity_id) as activity_count
+                                              from activities
+                                                       join groups on activities.group_id = groups.group_id
+                                                       join children on groups.group_id = children.group_id
+                                              group by children.child_id) as subquery);
+
+-- Групи, в яких кількість дітей вища за середню
+select groups.group_name,
+       count(children.child_id) as total_children
+from groups
+         join children on groups.group_id = children.group_id
+group by groups.group_name
+having count(children.child_id) > (select avg(children_count)
+                                   from (select count(child_id) as children_count
+                                         from children
+                                         group by group_id) as subquery);
