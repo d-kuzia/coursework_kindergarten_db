@@ -1,12 +1,14 @@
 --- Запити прості ---
--- Список усіх дітей та їхніх батьків
-select children.first_name  as child_name,
-       children.second_name as child_surname,
-       parents.first_name   as parent_name,
-       parents.second_name  as parent_surname
+-- Список дітей, які мають двох батьків
+select children.child_id,
+       children.first_name                                                as child_name,
+       children.second_name                                               as child_surname,
+       string_agg(parents.first_name || ' ' || parents.second_name, ', ') as parents_names
 from children
          join children_parents on children.child_id = children_parents.child_id
-         join parents on children_parents.parent_id = parents.parent_id;
+         join parents on children_parents.parent_id = parents.parent_id
+group by children.child_id, children.first_name, children.second_name
+having count(children_parents.parent_id) = 2;
 
 -- Усі заняття для груп із віковими межами від 1 до 2 років
 select activities.activity_type,
