@@ -90,3 +90,24 @@ $$;
 
 select *
 from get_meals_by_date_and_group('2024-12-19', 3);
+
+-- Всі дати відвідувань для заданої дитини
+create or replace function attendance_dates_for_child(c_id int)
+    returns table
+            (
+                attendance_date   date,
+                attendance_status varchar(10)
+            )
+    language plpgsql
+as
+$$
+begin
+    return query
+        select attendances.attendance_date, attendances.attendance_status
+        from attendances
+        where attendances.child_id = c_id;
+end;
+$$;
+
+select *
+from attendance_dates_for_child(1);
