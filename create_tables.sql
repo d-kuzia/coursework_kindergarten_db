@@ -55,9 +55,9 @@ alter table parents
     add constraint phone_number_format_check
         check ( phone_number ~ '^\+380[0-9]{9}$' );
 
-ALTER TABLE parents
-    ADD CONSTRAINT email_format_check
-        CHECK (email ~ '^[a-zA-Z0-9._%+-]+@gmail\.com$');
+alter table parents
+    add constraint email_format_check
+        check (email ~ '^[a-zA-Z0-9._%+-]+@gmail\.com$');
 
 create table children_parents
 (
