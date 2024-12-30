@@ -122,9 +122,3 @@ end;
 $$;
 
 call update_teacher_salary(5, 10);
-
-
-
-
-
-
